@@ -43,12 +43,12 @@ or you can skip this conversion step and train from raw png files by adding the 
 **Preprocess Data**
 
 ```
-bash prepare_1beam_data_for_prediction.sh
-bash prepare_2beam_data_for_prediction.sh
-bash prepare_3beam_data_for_prediction.sh
+# bash prepare_1beam_data_for_prediction.sh
+# bash prepare_2beam_data_for_prediction.sh
+# bash prepare_3beam_data_for_prediction.sh
 bash prepare_4beam_data_for_prediction.sh
-bash prepare_r100.sh # random sample 100 LiDAR points
-bash prepare_r200.sh # random sample 200 LiDAR points
+# bash prepare_r100.sh # random sample 100 LiDAR points
+# bash prepare_r200.sh # random sample 200 LiDAR points
 ```
 
 
