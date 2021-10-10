@@ -2,11 +2,11 @@
 
 This paper has been accepted by [Conference on Robot Learning 2021](https://www.robot-learning.org/).
 
-By [Ziyue Feng](ziyue.cool), [Longlong Jing](https://longlong-jing.github.io/), Peng Yin, Yingli Tian, and Bing Li.
+By [Ziyue Feng](ziyue.cool), [Longlong Jing](https://longlong-jing.github.io/), [Peng Yin](https://maxtomcmu.github.io/), [Yingli Tian](https://www.ccny.cuny.edu/profiles/yingli-tian), and [Bing Li](https://www.clemson.edu/cecas/departments/automotive-engineering/people/li.html).
 
 Arxiv: [Link](https://arxiv.org/abs/2109.09628)
 
-[![image](https://user-images.githubusercontent.com/21237230/136714298-787b9392-e654-4732-8a9d-32fce7eaf0e7.png)](https://www.youtube.com/watch?v=_rY4ytyBQFU)
+[![image](https://user-images.githubusercontent.com/21237230/136714405-de01ebac-12a6-4e5c-94bb-6ae93e4f86bf.png)](https://www.youtube.com/watch?v=_rY4ytyBQFU)
 
 ![image](https://user-images.githubusercontent.com/21237230/136713976-60e65097-5973-445a-b9f1-151ade89dcfb.png)
 
