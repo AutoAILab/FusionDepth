@@ -471,7 +471,7 @@ class MonodepthOptions:
         self.parser.add_argument("--run_name",
                                  help="the saved results name",
                                  type=str)
-        self.parser.add_argument('--nbeams', default=3, type=int)
+        self.parser.add_argument('--nbeams', default=4, type=int)
 
 
 
