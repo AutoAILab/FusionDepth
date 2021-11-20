@@ -7,6 +7,7 @@ By [Ziyue Feng](https://ziyue.cool), [Longlong Jing](https://longlong-jing.githu
 Arxiv: [Link](https://arxiv.org/abs/2109.09628)
 YouTube: [link](https://www.youtube.com/watch?v=_rY4ytyBQFU)
 Slides: [Link](https://docs.google.com/presentation/d/1B-qdfxH7kfr4KfRfNlfx8t9bY3yxLDvm7H_8dwhY1RQ/edit?usp=sharing)
+Poster: [Link](https://drive.google.com/file/d/1Irg1Z_Nnw7lGDyWOlslab2yBtnZL3JcX/view?usp=sharing)
 
 [![image](https://user-images.githubusercontent.com/21237230/136714405-de01ebac-12a6-4e5c-94bb-6ae93e4f86bf.png)](https://www.youtube.com/watch?v=_rY4ytyBQFU)
 
@@ -87,11 +88,26 @@ python export_detection.py
 Then you can train the PatchNet based on the exported depth maps.
 
 
+## 📦 Pretrained model
+
+You can download our pretrained model from the following links:
+(These are weights for the "Initial Depth" prediction only. Please use the updated data preparation scripts, which will provide better performance than mentioned our paper.)
+
+| CNN Backbone      | Input size  | Initial Depth Eigen Original AbsRel | Link                                                               |
+|-------------------|-------------|:-----------------------------------:|----------------------------------------------------------------------------------------------|
+| ResNet 18         | 640 x 192   |      0.070         | [Download 🔗](https://drive.google.com/file/d/1ZXxOscMcWewyu30rHF6Z6g6Lr5LSiYA-/view?usp=sharing)           |
+| ResNet 50         | 640 x 192   |     0.073          | [Download 🔗](https://drive.google.com/file/d/122vzTSSlhasji8uAG-7anyyG2rbdW86d/view?usp=sharing)         |
+
 ## 📊 KITTI evaluation
 
 ```shell
 python evaluate_depth.py
 python evaluate_completion.py
+```
+
+```
+python evaluate_depth.py --load_weights_folder log/res18/models/weights_best --eval_mono --nbeams 4 --num_layers 18
+python evaluate_depth.py --load_weights_folder log/res50/models/weights_best --eval_mono --nbeams 4 --num_layers 50
 ```
 
 ### Citation
