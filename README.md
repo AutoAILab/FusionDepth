@@ -124,3 +124,7 @@ python evaluate_depth.py --load_weights_folder log/res50/models/weights_best --e
 ## Reference
 
 Our code is based on the Monodepth2: https://github.com/nianticlabs/monodepth2
+
+# Contact
+
+If you have any concern with this paper or implementation, wellcome to open an issue or email me at 'zfeng@clemson.edu'
