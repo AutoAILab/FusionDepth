@@ -100,3 +100,58 @@ def generate_depth_map(calib_dir, velo_filename, cam=2, vel_depth=False, shape=N
         if crop:
             depth = depth[2:, :]
     return depth
+
+
+def ptc2depth(calib_dir, ptc, cam=2, shape=None):
+    """Generate a depth map from cam2 coord ptc(from depth2ptc)
+    """
+    # load calibration files
+    cam2cam = read_calib_file(os.path.join(calib_dir, 'calib_cam_to_cam.txt'))
+
+    # get image shape
+    im_shape = cam2cam["S_rect_02"][::-1].astype(np.int32)
+
+    P_rect = cam2cam['P_rect_0'+str(cam)].reshape(3, 4)
+
+    # remove all behind image plane (approximation)
+    # each row of the velodyne data is forward, left, up, reflectance
+    # while each row in the camera coordinate is right, down, forward
+    ptc = ptc[ptc[:, 2] >= 0, :]
+    ptc = np.concatenate([ptc, np.ones([ptc.shape[0], 1])], 1)
+
+    # project the points to the camera
+    velo_pts_im = np.dot(P_rect, ptc.T).T
+    velo_pts_im[:, :2] = velo_pts_im[:, :2] / velo_pts_im[:, 2][..., np.newaxis]
+    # check if in bounds
+    # use minus 1 to get the exact same value as KITTI matlab code
+    velo_pts_im[:, 0] = np.round(velo_pts_im[:, 0]) - 1
+    velo_pts_im[:, 1] = np.round(velo_pts_im[:, 1]) - 1
+    val_inds = (velo_pts_im[:, 0] >= 0) & (velo_pts_im[:, 1] >= 0)
+    val_inds = val_inds & (velo_pts_im[:, 0] < im_shape[1]) & (velo_pts_im[:, 1] < im_shape[0])
+    velo_pts_im = velo_pts_im[val_inds, :]
+
+    # project to image
+    depth = np.zeros((im_shape[:2]))
+    depth[velo_pts_im[:, 1].astype(np.int), velo_pts_im[:, 0].astype(np.int)] = velo_pts_im[:, 2]
+
+    # find the duplicate points and choose the closest depth
+    inds = sub2ind(depth.shape, velo_pts_im[:, 1], velo_pts_im[:, 0])
+    dupe_inds = [item for item, count in Counter(inds).items() if count > 1]
+    for dd in dupe_inds:
+        pts = np.where(inds == dd)[0]
+        x_loc = int(velo_pts_im[pts[0], 0])
+        y_loc = int(velo_pts_im[pts[0], 1])
+        depth[y_loc, x_loc] = velo_pts_im[pts, 2].min()
+    depth[depth < 0] = 0
+
+    if shape is not None:
+        crop = False
+        if shape[0] < depth.shape[0]:
+            crop = True
+        ypad = abs(shape[0] - depth.shape[0])
+        xpad = shape[1] - depth.shape[1]
+        xpad1 = xpad // 2
+        depth = np.pad(depth, ((ypad, 0), (xpad1, xpad - xpad1)))
+        if crop:
+            depth = depth[2:, :]
+    return depth
