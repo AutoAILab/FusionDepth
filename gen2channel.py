@@ -1,5 +1,4 @@
 import os
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 import sys
 import cv2
 import torch
@@ -7,22 +6,12 @@ import skimage.transform
 import numpy as np
 import torch.nn.functional as F
 from tqdm.auto import tqdm
-from kitti_utils import generate_depth_map, ptc2depth
+from kitti_utils import generate_depth_map
 from multiprocessing import Process, Queue, Pool, cpu_count
 
 regenerate = False
 test_only = False
 demo = False
-minus1only = False
-
-if len(sys.argv) > 3:
-    if sys.argv[3] == 'test_only':
-        test_only = True
-    elif sys.argv[3] == 'demo':
-        demo = True
-    elif sys.argv[3] == '-1only':
-        minus1only = True
-
 if sys.argv[1] == 'regen':
     regenerate = True
     print("regenerating, will clean previous files")
@@ -38,46 +27,27 @@ elif sys.argv[2] == '4beam':
     input_folder = '4beam'
     output_folder = '2channel'
     print("for 4-beams sample")
-elif sys.argv[2] == '1beam' or sys.argv[2] == '2beam' or sys.argv[2] == '3beam' or sys.argv[2] == '8beam' \
-     or sys.argv[2] == '16beam':
+elif sys.argv[2] == '1beam' or sys.argv[2] == '2beam' or sys.argv[2] == '3beam' or sys.argv[2] == '16beam':
     input_folder = sys.argv[2]
     output_folder = '2channel{}'.format(sys.argv[2])
     print("for {} sample".format(sys.argv[2]))
-elif sys.argv[2] == '4beamT':
-    input_folder = 'inf_translidar_4beam'
-    if minus1only:
-        output_folder = '2cha_4beamT-1'
-        print("for T-1 frame 4-beam sample")
-    else:
-        output_folder = '2cha_4beamT'
-        print("for 2 frame temporal fusion 4-beam sample")
-elif sys.argv[2] == '4beamT2':
-    input_folder = 'inf_translidar2_4beam'
-    if minus1only:
-        output_folder = '2cha_4beamT-2'
-        print("for T-1 frame 4-beam sample")
-    else:
-        output_folder = '2cha_4beamT2'
-        print("for 2 frame temporal fusion 4-beam sample")
+
+if len(sys.argv) > 3:
+    if sys.argv[3] == 'test_only':
+        test_only = True
+    elif sys.argv[3] == 'demo':
+        demo = True
+
 
 def get_4beam(folder, frame_index, side, do_flip):
     side_map = {"2": 2, "3": 3, "l": 2, "r": 3}
     calib_path = os.path.join(folder.split("/")[0]+'/'+folder.split("/")[1])
 
-    if input_folder == 'inf_translidar_4beam' or input_folder == 'inf_translidar2_4beam':
-        if minus1only:
-            ptc_filename = folder + "/{}/{}_{}_1t.npy".format(input_folder, int(frame_index), side)
-        else:
-            ptc_filename = folder + "/{}/{}_{}.npy".format(input_folder, int(frame_index), side)
-        ptc = np.load(ptc_filename)
-        depth_gt = ptc2depth(calib_path, ptc, cam=side_map[side], shape=[384, 1280])
-    else:
-        velo_filename = os.path.join(
-            folder,
-            "{}/{:010d}.bin".format(input_folder, int(frame_index)))
+    velo_filename = os.path.join(
+        folder,
+        "{}/{:010d}.bin".format(input_folder, int(frame_index)))
 
-        depth_gt = generate_depth_map(calib_path, velo_filename, side_map[side], shape=[384, 1280])
-
+    depth_gt = generate_depth_map(calib_path, velo_filename, side_map[side], shape=[384, 1280])
     depth_gt = F.max_pool2d(torch.tensor(depth_gt).unsqueeze(0),
                             2, ceil_mode=True).squeeze().numpy()
 
@@ -216,16 +186,16 @@ def gen2channel(line):
 def update(*a):
     pbar.update()
 
-test_file_path = 'splits/eigen/added_minus1.txt'
+test_file_path = 'splits/eigen/test_files.txt'
 test_file = open(test_file_path, 'r')
 lines = test_file.readlines()
 test_file.close()
 if not test_only:
-    #train_file_path = 'splits/eigen_zhou/train_files.txt'
-    #train_file = open(train_file_path, 'r')
-    #val_file_path = 'splits/eigen_zhou/val_files.txt'
-    #val_file = open(val_file_path, 'r')
-    #lines += train_file.readlines() + val_file.readlines()
+    train_file_path = 'splits/eigen_zhou/train_files.txt'
+    train_file = open(train_file_path, 'r')
+    val_file_path = 'splits/eigen_zhou/val_files.txt'
+    val_file = open(val_file_path, 'r')
+    lines += train_file.readlines() + val_file.readlines()
     train_file_path = 'splits/eigen_full/train_files.txt'
     train_file = open(train_file_path, 'r')
     val_file_path = 'splits/eigen_full/val_files.txt'
@@ -240,17 +210,15 @@ if demo:
     lines = demo_file.readlines()
     demo_file.close()
 
-if __name__ == '__main__':
-    print("using {} cpu cores".format(cpu_count()))
-    pool = Pool(cpu_count())
-    pbar = tqdm(total=len(lines))
+print("using {} cpu cores".format(cpu_count()))
+pool = Pool(cpu_count())
+pbar = tqdm(total=len(lines))
 
-    for line in lines:
-        #gen2channel(line)
-        #pbar.update()
-        pool.apply_async(gen2channel, args=(line,), callback=update)
+for line in lines:
+    #gen2channel(line)
+    pool.apply_async(gen2channel, args=(line,), callback=update)
 
-    pool.close()
-    pool.join()
-    pbar.clear(nolock=False)
-    pbar.close()
+pool.close()
+pool.join()
+pbar.clear(nolock=False)
+pbar.close()
