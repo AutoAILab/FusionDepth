@@ -112,11 +112,13 @@ python evaluate_depth.py --load_weights_folder log/res50/models/weights_best --e
 
 ### Citation
 ```
-@article{feng2021advancing,
-  title={Advancing Self-supervised Monocular Depth Learning with Sparse LiDAR},
+@inproceedings{feng2022advancing,
+  title={Advancing self-supervised monocular depth learning with sparse liDAR},
   author={Feng, Ziyue and Jing, Longlong and Yin, Peng and Tian, Yingli and Li, Bing},
-  journal={arXiv preprint arXiv:2109.09628},
-  year={2021}
+  booktitle={Conference on Robot Learning},
+  pages={685--694},
+  year={2022},
+  organization={PMLR}
 }
 ```
 
