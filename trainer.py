@@ -269,7 +269,7 @@ class Trainer:
         """Pass a minibatch through the network and generate images and losses
         """
         for key, ipt in inputs.items():
-            if key != 'date':
+            if key != 'date' and key != 'path':
                 inputs[key] = ipt.to(self.device)
 
         if self.opt.pose_model_type == "shared":
