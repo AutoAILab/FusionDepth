@@ -36,6 +36,7 @@ We ran our experiments with PyTorch 1.8.0, CUDA 11.1, Python 3.6.6 and Ubuntu 18
 **Download Data**
 
 You need to first download the KITTI RAW dataset, put in the `kitti_data` folder.
+If your data path is different, you can either soft link it as `kitti_data` or update it into [here](https://github.com/AutoAILab/FusionDepth/blob/366987b0fa3ae134769ac25c5e0b745d4fe88d11/sparsify/sparsify.py#L200)
 
 Our default settings expect that you have converted the png images to jpeg with this command, which also deletes the raw KITTI `.png` files:
 ```shell
