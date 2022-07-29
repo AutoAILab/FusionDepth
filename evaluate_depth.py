@@ -1,5 +1,3 @@
-#--eval_mono --load_weights_folder log/mdp/models/weights_refine74_pal/ --refine2d_deep true --catxy true --refine_depthnet_with_beam false --refine_2d --eval_gdc --det_name refineGDCtest
-
 from __future__ import absolute_import, division, print_function
 
 import os
@@ -22,7 +20,6 @@ from layers import *
 from PIL import Image
 import matplotlib as mpl
 import matplotlib.cm as cm
-import matplotlib.pyplot as plt
 
 cv2.setNumThreads(0)  # This speeds up evaluation 5x on our unix systems (OpenCV 3.3.1)
 
@@ -112,7 +109,7 @@ def evaluate(opt):
 
         encoder = networks.ResnetEncoder(opt.num_layers, False,
                                          cat4beam_to_color=opt.cat_4beam_to_color,
-                                         cat2channel=opt.cat2start, twoframe=(opt.nbeams == -4))
+                                         cat2channel=opt.cat2start)
         depth_decoder = networks.DepthDecoder(encoder.num_ch_enc,
                                               opt.scales, cat2end=opt.cat2end)
 
@@ -127,7 +124,7 @@ def evaluate(opt):
 
         if opt.beam_encoder:
             beam_encoder = networks.ResnetEncoder(opt.num_layers, False,
-                                                  beam_encoder=True, twoframe=(opt.nbeams == -4))
+                                                  beam_encoder=True)
             beam_encoder_path = os.path.join(opt.load_weights_folder, "beam_encoder.pth")
             beam_encoder.load_state_dict(torch.load(beam_encoder_path))
             beam_encoder.cuda()
@@ -192,9 +189,9 @@ def evaluate(opt):
 
                 img_mean += data[("color", 0, 0)].mean(dim=[0, 2, 3])
                 img_std += data[("color", 0, 0)].std(dim=[0, 2, 3])
-                #depth_to_stat = torch.cat([output[("disp", 0)].cpu(), data["2channel"]], 1)
-                #depth_mean += depth_to_stat.mean(dim=[0, 2, 3])
-                #depth_std += depth_to_stat.std(dim=[0, 2, 3])
+                depth_to_stat = torch.cat([output[("disp", 0)].cpu(), data["2channel"]], 1)
+                depth_mean += depth_to_stat.mean(dim=[0, 2, 3])
+                depth_std += depth_to_stat.std(dim=[0, 2, 3])
                 stat_count += 1
 
                 if opt.refine_2d:
@@ -247,6 +244,7 @@ def evaluate(opt):
                 pred_disps.append(pred_disp)
 
                 if opt.save_sample == idx:
+                    from matplotlib import pyplot as plt
                     plt.pcolor(pred_disp[0], cmap='viridis')
                     plt.axis('equal')
                     plt.savefig('/home/zfeng/Desktop/depth{}.jpg'.format(idx), bbox_inches='tight', pad_inches=0)
@@ -264,8 +262,8 @@ def evaluate(opt):
                 idx += 1
 
         pred_disps = np.concatenate(pred_disps)
-        #print('depth_mean: ', depth_mean / stat_count)
-        #print('depth_std: ', depth_std / stat_count)
+        print('depth_mean: ', depth_mean / stat_count)
+        print('depth_std: ', depth_std / stat_count)
         print('img_mean: ', img_mean / stat_count)
         print('img_std: ', img_std / stat_count)
 
@@ -311,8 +309,6 @@ def evaluate(opt):
     gt_depths = np.load(gt_path, fix_imports=True, encoding='latin1', allow_pickle=True)["data"]
 
     if opt.random_sample == -1:
-        if int(opt.nbeams) < 0:
-            opt.nbeams = -int(opt.nbeams)
         print('using {} beams LiDAR'.format(opt.nbeams))
         beam_path = os.path.join(splits_dir, opt.eval_split, "{}beam.npz".format(opt.nbeams))
     else:
@@ -421,10 +417,7 @@ def evaluate(opt):
                 np.save('visualization/npy/{}{}beam_depth.npy'.format(i, opt.vis_name), beam_depth)
                 np.save('visualization/npy/{}{}mask.npy'.format(i, opt.vis_name), mask)
 
-            hist = cv2.calcHist([diff[mask]], [0], None, [80], [0, 80])
-            plt.clf()
-            plt.plot(hist)
-            diff = np.ones_like(diff) * 80 - np.clip(diff, 0, opt.error_range) * (80 / opt.error_range)
+            diff = np.ones_like(diff) * 80 - np.clip(diff, 0, 2) * 40
             diff_color = cv2.applyColorMap(diff.astype(np.uint8), cv2.COLORMAP_HSV)
             ones = np.ones_like(diff_color) * 0
             ones[mask] = diff_color[mask]
@@ -440,7 +433,6 @@ def evaluate(opt):
             else:
                 cv2.imwrite('visualization/prediction/{}{}.png'.format(i, opt.vis_name), ones,
                             [cv2.IMWRITE_PNG_COMPRESSION, 0])
-                plt.savefig('visualization/prediction/{}{}hist.png'.format(i, opt.vis_name))
 
             disp = 1 / pred_depth
             vmax = np.percentile(disp, 95)
@@ -488,7 +480,6 @@ def evaluate(opt):
     if not opt.disable_median_scaling:
         ratios = np.array(ratios)
         med = np.median(ratios)
-        print(ratios)
         print(" Scaling ratios | med: {:0.3f} | std: {:0.3f}".format(med, np.std(ratios / med)))
 
     mean_errors = np.array(errors).mean(0)
